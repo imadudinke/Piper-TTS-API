@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const { execFile } = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -6,6 +7,8 @@ const path = require("path");
 const app = express();
 const port = 5000;
 
+// Enable CORS for all routes to allow external websites to use the API
+app.use(cors());
 app.use(express.json());
 
 app.post("/synthesize", (req, res) => {
