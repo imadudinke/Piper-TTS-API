@@ -12,8 +12,7 @@ RUN apk add --no-cache \
     espeak-ng \
     espeak-ng-dev
 
-# Create app directory and user
-RUN addgroup -g 1000 node && adduser -u 1000 -G node -s /bin/sh -D node
+# Note: node user/group already exists in node:20-alpine base image
 
 # Build stage
 FROM base AS builder
