@@ -1,16 +1,18 @@
-# Multi-stage build for production-ready TTS API
+# Alternative Docker approach using Python piper-tts for better compatibility
 FROM node:20-alpine AS base
 
-# Install required system dependencies for TTS
+# Install Python and pip for piper-tts
 RUN apk add --no-cache \
+    python3 \
+    py3-pip \
     dumb-init \
     curl \
     ca-certificates \
-    gcompat \
-    libstdc++ \
-    libgomp \
     espeak-ng \
-    espeak-ng-dev
+    git
+
+# Install piper-tts via pip
+RUN pip3 install piper-tts
 
 # Create app directory and user
 RUN addgroup -g 1000 node && adduser -u 1000 -G node -s /bin/sh -D node
@@ -23,8 +25,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy application code and TTS files
-COPY . .
+# Copy application code (excluding piper_total for this approach)
+COPY index.js ./
+COPY piper_total/en_US-lessac-medium.onnx* ./models/
 
 # Production stage
 FROM base AS production
@@ -34,15 +37,11 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/index.js ./
-COPY --from=builder /app/piper_total ./piper_total
-
-# Make Piper binary executable
-RUN chmod +x ./piper_total/piper_new
+COPY --from=builder /app/models ./models
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV LD_LIBRARY_PATH=/app/piper_total/piper:/usr/lib:/usr/local/lib:$LD_LIBRARY_PATH
-ENV ESPEAK_DATA_PATH=/app/piper_total/piper/espeak-ng-data
+ENV PIPER_BINARY=piper
 
 # Create directory for temporary audio files
 RUN mkdir -p /app/temp && chown -R node:node /app

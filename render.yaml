@@ -13,4 +13,6 @@ services:
         value: 5000
     envVars:
       - key: LD_LIBRARY_PATH
-        value: /app/piper_total/piper:$LD_LIBRARY_PATH
+        value: /app/piper_total/piper:/usr/lib:/usr/local/lib:$LD_LIBRARY_PATH
+      - key: ESPEAK_DATA_PATH
+        value: /app/piper_total/piper/espeak-ng-data
