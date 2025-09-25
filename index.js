@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const port = 3000;
+const port = 5000;
 
 app.use(express.json());
 
@@ -15,21 +15,24 @@ app.post("/synthesize", (req, res) => {
     }
 
     const outputFilePath = path.join(__dirname, "output.wav");
-    // Make sure these paths are correct for your uploaded files!
-    const piperPath = "./piper_total/piper"; // Or the name of your uploaded binary file
-    const modelPath = "./piper_total/en_US-lessac-medium.onnx"; // Or the name of your uploaded model
+    // Updated paths for the working Piper binary
+    const piperPath = "./piper_total/piper_new"; // New working binary
+    const modelPath = "./piper_total/en_US-lessac-medium.onnx"; // Model file
 
     const commandArgs = [
         "-m",
         modelPath,
         "-f",
         outputFilePath,
+        "--espeak_data",
+        "./piper_total/piper/espeak-ng-data", // Add espeak data path
         "--sentence-silence-seconds",
         "0.5", // Optional: adds a pause between sentences
     ];
 
     // This is important for piping the text into Piper
-    const child = execFile(piperPath, commandArgs, (error, stdout, stderr) => {
+    const env = { ...process.env, LD_LIBRARY_PATH: './piper_total/piper:' + (process.env.LD_LIBRARY_PATH || '') };
+    const child = execFile(piperPath, commandArgs, { env }, (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing Piper: ${stderr}`);
             return res.status(500).send("TTS synthesis failed.");
@@ -51,6 +54,6 @@ app.post("/synthesize", (req, res) => {
     child.stdin.end();
 });
 
-app.listen(port, () => {
-    console.log(`TTS API listening at http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`TTS API listening at http://0.0.0.0:${port}`);
 });
